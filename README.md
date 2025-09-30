@@ -37,8 +37,10 @@ Serveur d'emails jetables avec Next.js 15, TypeScript, serveur SMTP local et Red
 
 ### Stockage hybride
 
-- **Redis** : Emails temporaires (TTL 1h), inbox actives
-- **SQLite** : Historique adresses créées, compteurs emails reçus, statistiques
+- **Redis** : Emails temporaires (TTL configurable), inbox actives
+- **SQLite** : 
+  - Historique adresses créées, compteurs emails reçus, statistiques
+  - **Configuration** : durée de rétention (remplace `EMAIL_RETENTION` env)
 
 ## Prérequis
 
@@ -95,8 +97,9 @@ docker-compose down
 | `SMTP_DOMAIN` | localhost | Domaine mail |
 | `REDIS_HOST` | localhost | Hôte Redis |
 | `REDIS_PORT` | 6379 | Port Redis |
-| `EMAIL_RETENTION` | 3600 | TTL emails défaut (secondes, 60-31536000) |
 | `DB_PATH` | ./data | Chemin base SQLite |
+
+**Note** : La durée de rétention des emails (`email_retention`) est maintenant configurée uniquement via l'interface Settings et stockée en SQLite. Valeur par défaut auto-initialisée : 3600s (1 heure).
 
 ## Configuration DNS Cloudflare
 
@@ -365,6 +368,9 @@ Fichier : `./data/addresses.db` (ou `DB_PATH`)
 - `value` : Valeur
 - `updated_at` : Timestamp dernière modification
 
+**Settings disponibles :**
+- `email_retention` : Durée TTL emails en secondes (défaut: 3600, auto-initialisé au premier accès)
+
 **Backup :**
 ```bash
 # Copier base de données
@@ -407,7 +413,9 @@ sqlite3 ./data/addresses.db "DELETE FROM addresses WHERE expires_at < strftime('
   - Conversion automatique en secondes
   - Affichage total en secondes (live)
   - Limites : 1 minute - 365 jours
+  - **Source unique** : SQLite (plus de variable env)
 - Sauvegarde persistante en SQLite
+- Auto-initialisation à 3600s (1h) si non configuré
 - Application immédiate aux nouvelles adresses
 
 ## Tests

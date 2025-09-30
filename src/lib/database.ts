@@ -154,12 +154,20 @@ export function setSetting(key: string, value: string): void {
 }
 
 /**
- * Get email retention (from settings or env default)
+ * Get email retention (from settings with auto-init default)
  */
 export function getEmailRetention(): number {
   const setting = getSetting('email_retention');
-  if (setting) return parseInt(setting, 10);
-  return parseInt(process.env.EMAIL_RETENTION || '3600', 10);
+  
+  if (setting) {
+    return parseInt(setting, 10);
+  }
+  
+  // Initialize default value (1 hour) if not exists
+  const defaultRetention = '3600';
+  setSetting('email_retention', defaultRetention);
+  
+  return parseInt(defaultRetention, 10);
 }
 
 /**

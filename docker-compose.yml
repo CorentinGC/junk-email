@@ -25,7 +25,9 @@ services:
       - SMTP_DOMAIN=${SMTP_DOMAIN:-localhost}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - EMAIL_RETENTION=${EMAIL_RETENTION:-3600}
+      - DB_PATH=/app/data
+    volumes:
+      - db_data:/app/data
     depends_on:
       redis:
         condition: service_healthy
@@ -42,7 +44,6 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - SMTP_DOMAIN=${SMTP_DOMAIN:-localhost}
-      - EMAIL_RETENTION=${EMAIL_RETENTION:-3600}
       - DB_PATH=/app/data
     volumes:
       - db_data:/app/data

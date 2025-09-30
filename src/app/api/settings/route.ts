@@ -10,9 +10,9 @@ export async function GET() {
   try {
     const settings = getAllSettings();
     
-    // Add default from env if not set
+    // Ensure email_retention exists (will auto-init via getEmailRetention if needed)
     if (!settings.email_retention) {
-      settings.email_retention = process.env.EMAIL_RETENTION || '3600';
+      settings.email_retention = '3600';
     }
     
     return NextResponse.json({ 
