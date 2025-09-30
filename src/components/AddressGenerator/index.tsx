@@ -21,14 +21,32 @@ export default function AddressGenerator({ onGenerate }: Props) {
   const [mode, setMode] = useState<'random' | 'custom'>('random');
 
   /**
+   * Validate local part of email (before @)
+   * @param {string} value - Local part to validate
+   * @returns {boolean} True if valid
+   */
+  const isValidInput = (value: string): boolean => {
+    if (!value || value.length === 0) return false;
+    if (value.startsWith('.') || value.endsWith('.')) return false;
+    return /^[a-z0-9._-]+$/i.test(value);
+  };
+
+  /**
    * Generate or create email address
    */
   const handleSubmit = async () => {
     setLoading(true);
     setError(null);
 
+    // Client-side validation for custom addresses
+    if (mode === 'custom' && !isValidInput(customEmail.trim())) {
+      setError('Invalid characters. Only letters, numbers, dot, hyphen and underscore allowed.');
+      setLoading(false);
+      return;
+    }
+
     try {
-      const body = mode === 'custom' ? { customAddress: customEmail } : undefined;
+      const body = mode === 'custom' ? { customAddress: customEmail.trim() } : undefined;
       
       const response = await fetch('/api/address', { 
         method: 'POST',
@@ -75,14 +93,19 @@ export default function AddressGenerator({ onGenerate }: Props) {
         </div>
 
         {mode === 'custom' && (
-          <input
-            type="text"
-            className={styles.input}
-            placeholder="username (without @domain)"
-            value={customEmail}
-            onChange={(e) => setCustomEmail(e.target.value)}
-            disabled={loading}
-          />
+          <div>
+            <input
+              type="text"
+              className={styles.input}
+              placeholder="username (letters, numbers, .-_ only)"
+              value={customEmail}
+              onChange={(e) => setCustomEmail(e.target.value)}
+              disabled={loading}
+            />
+            <p className={styles.hint}>
+              Allowed: letters (a-z), numbers (0-9), dot (.), hyphen (-), underscore (_)
+            </p>
+          </div>
         )}
 
         <button

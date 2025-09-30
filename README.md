@@ -10,7 +10,7 @@ Serveur d'emails jetables avec Next.js 15, TypeScript, serveur SMTP local et Red
 - 🎨 **Interface moderne** Next.js 15 + TypeScript + SCSS
 - 📱 **Mobile-first** design responsive
 - ⚙️ **Configuration dynamique** : durée de rétention modifiable via UI
-- 📧 **Adresses personnalisées** : création aléatoire ou manuelle
+- 📧 **Adresses personnalisées** : création aléatoire (a-z, 0-9) ou manuelle (a-z, 0-9, .-_)
 - 📜 **Historique adresses** : réutilisation des adresses actives
 - 🔗 **Liens directs inbox** : accès direct via URL partageable `/inbox/[address]`
 - 🐳 **Docker Compose** pour déploiement simplifié
@@ -218,15 +218,44 @@ nc -zv mail.exemple.com 25
 - Cliquer sur le nuage pour le rendre **gris**
 - Attendre 5 min pour propagation
 
+## Validation des adresses
+
+### Adresses générées aléatoirement
+- **Caractères autorisés :** lettres minuscules (a-z) et chiffres (0-9)
+- **Longueur :** 10 caractères
+- **Exemple :** `abc123xyz0@mail.domain.com`
+
+### Adresses personnalisées (custom)
+- **Caractères autorisés :** 
+  - Lettres (a-z, A-Z) - case insensitive
+  - Chiffres (0-9)
+  - Point (.)
+  - Tiret (-)
+  - Underscore (_)
+- **Restrictions :**
+  - Ne peut pas commencer ou finir par un point
+  - Au moins 1 caractère
+- **Exemples valides :**
+  - `john.doe`
+  - `user_123`
+  - `test-email`
+- **Exemples invalides :**
+  - `.john` (commence par un point)
+  - `user.` (finit par un point)
+  - `user@domain` (@ non autorisé dans partie locale)
+  - `user space` (espaces non autorisés)
+
 ## Routes & API
 
-### Page `/inbox/[address]`
-Accès direct à une inbox spécifique via URL.
+### Page `/inbox/[username]`
+Accès direct à une inbox spécifique via URL simplifiée (username uniquement).
 
-**Exemple :**
-- `https://mail.votredomaine.com/inbox/test123@mail.votredomaine.com`
+**Exemples :**
+- `https://mail.votredomaine.com/inbox/test123`
+- `https://mail.votredomaine.com/inbox/abc-xyz`
 - Permet de partager un lien direct vers une inbox
 - Bouton "Share Link" disponible dans l'interface pour copier l'URL
+- Le domaine (@mail.votredomaine.com) est automatiquement ajouté côté serveur
 
 ### `POST /api/address`
 Génère une nouvelle adresse email jetable

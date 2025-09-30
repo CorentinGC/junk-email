@@ -98,7 +98,7 @@
   border: 2px solid #e0e0e0;
   border-radius: 8px;
   font-size: 0.95rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
   transition: border-color 0.2s;
 
   &:focus {
@@ -114,6 +114,17 @@
   @media (min-width: 768px) {
     padding: 1rem 1.25rem;
     font-size: 1rem;
+  }
+}
+
+.hint {
+  font-size: 0.75rem;
+  color: #999;
+  margin: 0 0 1rem;
+  text-align: left;
+
+  @media (min-width: 768px) {
+    font-size: 0.8rem;
   }
 }
 

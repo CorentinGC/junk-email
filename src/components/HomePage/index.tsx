@@ -23,7 +23,8 @@ export default function HomePage() {
    * @param {InboxAddress} inbox - Generated inbox address
    */
   const handleGenerate = (inbox: InboxAddress) => {
-    router.push(`/inbox/${encodeURIComponent(inbox.address)}`);
+    const username = inbox.address.split('@')[0];
+    router.push(`/inbox/${encodeURIComponent(username)}`);
   };
 
   /**
@@ -31,7 +32,8 @@ export default function HomePage() {
    * @param {string} address - Email address
    */
   const handleSelectAddress = (address: string) => {
-    router.push(`/inbox/${encodeURIComponent(address)}`);
+    const username = address.split('@')[0];
+    router.push(`/inbox/${encodeURIComponent(username)}`);
   };
 
   return (

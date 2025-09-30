@@ -16,9 +16,10 @@ interface Props {
   inbox: InboxAddress;
   onReset: () => void;
   showShareLink?: boolean;
+  username?: string;
 }
 
-export default function InboxViewer({ inbox, onReset, showShareLink = false }: Props) {
+export default function InboxViewer({ inbox, onReset, showShareLink = false, username }: Props) {
   const [emails, setEmails] = useState<Email[]>([]);
   const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
   const [loading, setLoading] = useState(false);
@@ -58,11 +59,12 @@ export default function InboxViewer({ inbox, onReset, showShareLink = false }: P
   };
 
   /**
-   * Copy inbox direct link to clipboard
+   * Copy inbox direct link to clipboard (username only in URL)
    */
   const copyInboxLink = async () => {
     try {
-      const url = `${window.location.origin}/inbox/${encodeURIComponent(inbox.address)}`;
+      const usernameOnly = username || inbox.address.split('@')[0];
+      const url = `${window.location.origin}/inbox/${encodeURIComponent(usernameOnly)}`;
       await navigator.clipboard.writeText(url);
       setLinkCopied(true);
       setTimeout(() => setLinkCopied(false), 2000);

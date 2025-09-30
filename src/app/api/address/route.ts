@@ -4,7 +4,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { generateEmailAddress, isValidEmail, getDomain } from '#lib/addressGenerator';
+import { generateEmailAddress, isValidEmail, getDomain, isValidLocalPart, getLocalPart } from '#lib/addressGenerator';
 import { createInboxAddress, getInboxAddress } from '#lib/emailStorage';
 
 export async function POST(request: Request) {
@@ -27,6 +27,15 @@ export async function POST(request: Request) {
           );
         }
         
+        // Validate local part
+        const localPart = getLocalPart(custom);
+        if (!isValidLocalPart(localPart)) {
+          return NextResponse.json(
+            { success: false, error: 'Invalid characters in email address. Only letters, numbers, dot, hyphen and underscore allowed.' },
+            { status: 400 }
+          );
+        }
+        
         // Check domain matches
         const emailDomain = getDomain(custom);
         if (emailDomain !== domain) {
@@ -38,10 +47,10 @@ export async function POST(request: Request) {
         
         address = custom;
       } else {
-        // Only local part provided, add domain
-        if (!/^[a-z0-9._-]+$/i.test(custom)) {
+        // Only local part provided, validate and add domain
+        if (!isValidLocalPart(custom)) {
           return NextResponse.json(
-            { success: false, error: 'Invalid characters in address' },
+            { success: false, error: 'Invalid characters in address. Only letters, numbers, dot, hyphen and underscore allowed.' },
             { status: 400 }
           );
         }

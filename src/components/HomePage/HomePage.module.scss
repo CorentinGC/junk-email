@@ -37,8 +37,8 @@
   justify-content: center;
 
   &:hover {
-    border-color: #2196F3;
-    color: #2196F3;
+    border-color: #4CAF50;
+    color: #4CAF50;
     transform: rotate(45deg);
   }
 
@@ -124,6 +124,10 @@
 
   @media (min-width: 768px) {
     font-size: 0.9rem;
+  }
+
+  p {
+    margin: 0;
   }
 }
 

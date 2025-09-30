@@ -6,11 +6,11 @@
 import InboxPage from './components/InboxPage';
 
 interface Props {
-  params: Promise<{ address: string }>;
+  params: Promise<{ username: string }>;
 }
 
 export default async function Page({ params }: Props) {
-  const { address } = await params;
-  return <InboxPage address={address} />;
+  const { username } = await params;
+  return <InboxPage username={username} />;
 }
 
