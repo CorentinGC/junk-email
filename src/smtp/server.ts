@@ -4,12 +4,28 @@
  */
 import dotenv from 'dotenv';
 import { SMTPServer } from 'smtp-server';
-import { simpleParser } from 'mailparser';
+import { simpleParser, type AddressObject } from 'mailparser';
 import { nanoid } from 'nanoid';
 import { storeEmail } from '#lib/emailStorage';
 import type { Email, EmailAddress } from '#types/email';
 
 dotenv.config();
+
+/**
+ * Normalize address object to array
+ * @param {AddressObject | AddressObject[] | undefined} addr - Address object or array
+ * @returns {EmailAddress[]} Normalized array of addresses
+ */
+function normalizeAddresses(addr: AddressObject | AddressObject[] | undefined): EmailAddress[] {
+  if (!addr) return [];
+  const addresses = Array.isArray(addr) ? addr : [addr];
+  return addresses.flatMap(a => 
+    a.value.map(v => ({
+      address: v.address || '',
+      name: v.name,
+    }))
+  );
+}
 
 const SMTP_PORT = parseInt(process.env.SMTP_PORT || '25', 10);
 const SMTP_HOST = process.env.SMTP_HOST || '0.0.0.0';
@@ -32,16 +48,16 @@ const server = new SMTPServer({
       try {
         const parsed = await simpleParser(emailData);
         
+        const fromAddresses = normalizeAddresses(parsed.from);
+        const toAddresses = normalizeAddresses(parsed.to);
+        
         const email: Email = {
           id: nanoid(),
-          from: {
-            address: parsed.from?.value[0]?.address || 'unknown@unknown',
-            name: parsed.from?.value[0]?.name,
+          from: fromAddresses[0] || {
+            address: 'unknown@unknown',
+            name: undefined,
           },
-          to: (parsed.to?.value || []).map((addr): EmailAddress => ({
-            address: addr.address || '',
-            name: addr.name,
-          })),
+          to: toAddresses,
           subject: parsed.subject || '(No subject)',
           text: parsed.text || '',
           html: parsed.html || undefined,
