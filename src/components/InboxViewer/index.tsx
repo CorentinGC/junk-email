@@ -6,7 +6,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { MdRefresh, MdContentCopy, MdArrowBack } from 'react-icons/md';
+import { MdRefresh, MdContentCopy, MdArrowBack, MdLink } from 'react-icons/md';
 import EmailList from '#components/EmailList';
 import EmailDetail from '#components/EmailDetail';
 import type { InboxAddress, Email } from '#types/email';
@@ -15,13 +15,15 @@ import styles from './InboxViewer.module.scss';
 interface Props {
   inbox: InboxAddress;
   onReset: () => void;
+  showShareLink?: boolean;
 }
 
-export default function InboxViewer({ inbox, onReset }: Props) {
+export default function InboxViewer({ inbox, onReset, showShareLink = false }: Props) {
   const [emails, setEmails] = useState<Email[]>([]);
   const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   /**
    * Fetch emails from API
@@ -55,6 +57,20 @@ export default function InboxViewer({ inbox, onReset }: Props) {
     }
   };
 
+  /**
+   * Copy inbox direct link to clipboard
+   */
+  const copyInboxLink = async () => {
+    try {
+      const url = `${window.location.origin}/inbox/${encodeURIComponent(inbox.address)}`;
+      await navigator.clipboard.writeText(url);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy link:', err);
+    }
+  };
+
   useEffect(() => {
     fetchEmails();
     const interval = setInterval(fetchEmails, 5000); // Poll every 5s
@@ -85,6 +101,15 @@ export default function InboxViewer({ inbox, onReset }: Props) {
           >
             <MdContentCopy />
           </button>
+          {showShareLink && (
+            <button
+              className={styles.linkButton}
+              onClick={copyInboxLink}
+              title="Copy inbox link"
+            >
+              <MdLink />
+            </button>
+          )}
         </div>
         <button
           className={styles.refreshButton}
@@ -97,6 +122,7 @@ export default function InboxViewer({ inbox, onReset }: Props) {
       </div>
 
       {copied && <div className={styles.copiedNotif}>Address copied!</div>}
+      {linkCopied && <div className={styles.copiedNotif}>Inbox link copied!</div>}
 
       <EmailList
         emails={emails}

@@ -72,7 +72,8 @@
   }
 }
 
-.copyButton {
+.copyButton,
+.linkButton {
   background: none;
   border: none;
   cursor: pointer;
@@ -87,6 +88,10 @@
   &:hover {
     transform: scale(1.1);
   }
+}
+
+.linkButton {
+  color: #667eea;
 }
 
 .refreshButton {

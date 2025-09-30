@@ -12,6 +12,7 @@ Serveur d'emails jetables avec Next.js 15, TypeScript, serveur SMTP local et Red
 - ⚙️ **Configuration dynamique** : durée de rétention modifiable via UI
 - 📧 **Adresses personnalisées** : création aléatoire ou manuelle
 - 📜 **Historique adresses** : réutilisation des adresses actives
+- 🔗 **Liens directs inbox** : accès direct via URL partageable `/inbox/[address]`
 - 🐳 **Docker Compose** pour déploiement simplifié
 - 🔒 **Sécurité** : sanitization HTML, validation stricte
 
@@ -217,7 +218,15 @@ nc -zv mail.exemple.com 25
 - Cliquer sur le nuage pour le rendre **gris**
 - Attendre 5 min pour propagation
 
-## API Endpoints
+## Routes & API
+
+### Page `/inbox/[address]`
+Accès direct à une inbox spécifique via URL.
+
+**Exemple :**
+- `https://mail.votredomaine.com/inbox/test123@mail.votredomaine.com`
+- Permet de partager un lien direct vers une inbox
+- Bouton "Share Link" disponible dans l'interface pour copier l'URL
 
 ### `POST /api/address`
 Génère une nouvelle adresse email jetable
