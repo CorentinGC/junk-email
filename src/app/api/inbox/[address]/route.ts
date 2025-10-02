@@ -32,7 +32,7 @@ export async function GET(
     const inbox = await getInboxAddress(fullAddress);
     if (!inbox) {
       return NextResponse.json(
-        { success: false, error: 'Inbox not found or expired' },
+        { success: false, error: 'Inbox not found' },
         { status: 404 }
       );
     }

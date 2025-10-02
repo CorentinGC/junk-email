@@ -44,13 +44,13 @@
   cursor: pointer;
   transition: all 0.2s;
 
-  &:hover:not(.expired) {
+  &:hover:not(.deleting) {
     border-color: #4CAF50;
     background: #f9fff9;
   }
 
-  &.expired {
-    opacity: 0.6;
+  &.deleting {
+    opacity: 0.5;
     cursor: not-allowed;
     background: #fafafa;
   }
@@ -104,14 +104,29 @@
   white-space: nowrap;
 }
 
-.badge {
-  background: #ff9800;
-  color: white;
-  padding: 0.125rem 0.5rem;
-  border-radius: 12px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-transform: uppercase;
+.deleteBtn {
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  color: #999;
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  border-radius: 4px;
+
+  &:hover:not(:disabled) {
+    color: #f44336;
+    background: #fff5f5;
+  }
+
+  &:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
 }
 
 .showMore {

@@ -57,13 +57,10 @@ export async function POST(request: Request) {
         address = `${custom}@${domain}`;
       }
       
-      // Check if already exists
+      // Check if already exists - return existing address instead of error
       const existing = await getInboxAddress(address);
       if (existing) {
-        return NextResponse.json(
-          { success: false, error: 'Address already exists' },
-          { status: 409 }
-        );
+        return NextResponse.json({ success: true, data: existing });
       }
     } else {
       // Generate random

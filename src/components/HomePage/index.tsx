@@ -7,24 +7,75 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { MdSettings as MdSettingsIcon, MdLogout } from 'react-icons/md';
-import AddressGenerator from '#components/AddressGenerator';
+import { MdLogout, MdEmail, MdCasino } from 'react-icons/md';
 import AddressHistory from '#components/AddressHistory';
-import Settings from '#components/Settings';
-import type { InboxAddress } from '#types/email';
 import styles from './HomePage.module.scss';
 
 export default function HomePage() {
   const router = useRouter();
-  const [showSettings, setShowSettings] = useState(false);
+  const [customAddress, setCustomAddress] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   /**
-   * Navigate to inbox page when address is generated
-   * @param {InboxAddress} inbox - Generated inbox address
+   * Validate local part of email
+   * @param {string} value - Local part to validate
+   * @returns {boolean} True if valid
    */
-  const handleGenerate = (inbox: InboxAddress) => {
-    const username = inbox.address.split('@')[0];
-    router.push(`/inbox/${encodeURIComponent(username)}`);
+  const isValidInput = (value: string): boolean => {
+    if (!value || value.length === 0) return false;
+    if (value.startsWith('.') || value.endsWith('.')) return false;
+    return /^[a-z0-9._-]+$/i.test(value);
+  };
+
+  /**
+   * Create address (custom or random) and navigate to inbox
+   * @param {string|null} address - Custom address or null for random
+   */
+  const createAndNavigate = async (address: string | null) => {
+    setLoading(true);
+    setError(null);
+
+    if (address && !isValidInput(address)) {
+      setError('Caractères invalides. Utilisez uniquement: lettres, chiffres, .-_');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const body = address ? { customAddress: address } : undefined;
+      
+      const response = await fetch('/api/address', { 
+        method: 'POST',
+        headers: body ? { 'Content-Type': 'application/json' } : {},
+        body: body ? JSON.stringify(body) : undefined,
+      });
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || 'Échec de création');
+      }
+
+      const username = result.data.address.split('@')[0];
+      router.push(`/inbox/${encodeURIComponent(username)}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur inconnue');
+      setLoading(false);
+    }
+  };
+
+  /**
+   * Handle custom address creation
+   */
+  const handleCreateCustom = () => {
+    createAndNavigate(customAddress.trim());
+  };
+
+  /**
+   * Handle random address generation
+   */
+  const handleCreateRandom = () => {
+    createAndNavigate(null);
   };
 
   /**
@@ -46,7 +97,6 @@ export default function HomePage() {
       router.refresh();
     } catch (error) {
       console.error('Logout error:', error);
-      // Force redirect even if API call fails
       router.push('/login');
       router.refresh();
     }
@@ -57,35 +107,60 @@ export default function HomePage() {
       <header className={styles.header}>
         <div>
           <h1 className={styles.title}>Junk Mail</h1>
-          <p className={styles.subtitle}>Disposable email for testing & privacy</p>
+          <p className={styles.subtitle}>Adresses jetables pour tests & confidentialité</p>
         </div>
-        <div className={styles.headerActions}>
-          <button
-            className={styles.settingsBtn}
-            onClick={() => setShowSettings(!showSettings)}
-            title="Settings"
-          >
-            <MdSettingsIcon />
-          </button>
-          <button
-            className={styles.logoutBtn}
-            onClick={handleLogout}
-            title="Logout"
-          >
-            <MdLogout />
-          </button>
-        </div>
+        <button
+          className={styles.logoutBtn}
+          onClick={handleLogout}
+          title="Déconnexion"
+        >
+          <MdLogout />
+        </button>
       </header>
-
-      {showSettings && (
-        <div className={styles.settingsPanel}>
-          <Settings />
-        </div>
-      )}
 
       <main className={styles.main}>
         <div className={styles.mainContent}>
-          <AddressGenerator onGenerate={handleGenerate} />
+          <div className={styles.createBox}>
+            <MdEmail className={styles.icon} />
+            <h2 className={styles.createTitle}>Créer une adresse email</h2>
+            
+            <div className={styles.inputGroup}>
+              <input
+                type="text"
+                className={styles.input}
+                placeholder="nom-adresse (lettres, chiffres, .-_ uniquement)"
+                value={customAddress}
+                onChange={(e) => setCustomAddress(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && !loading && customAddress.trim() && handleCreateCustom()}
+                disabled={loading}
+              />
+              <button
+                className={styles.createBtn}
+                onClick={handleCreateCustom}
+                disabled={loading || !customAddress.trim()}
+                title="Créer cette adresse"
+              >
+                {loading ? '...' : 'Créer'}
+              </button>
+            </div>
+
+            <div className={styles.divider}>
+              <span>ou</span>
+            </div>
+
+            <button
+              className={styles.randomBtn}
+              onClick={handleCreateRandom}
+              disabled={loading}
+            >
+              <MdCasino />
+              Générer une adresse aléatoire
+            </button>
+
+            {error && (
+              <div className={styles.error}>{error}</div>
+            )}
+          </div>
         </div>
 
         <aside className={styles.sidebar}>
@@ -94,7 +169,7 @@ export default function HomePage() {
       </main>
 
       <footer className={styles.footer}>
-        <p>Emails auto-delete based on retention settings</p>
+        <p>Adresses permanentes - Emails expirés automatiquement</p>
       </footer>
     </div>
   );

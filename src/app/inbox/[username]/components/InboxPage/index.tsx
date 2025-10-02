@@ -7,10 +7,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { MdSettings as MdSettingsIcon } from 'react-icons/md';
 import InboxViewer from '#components/InboxViewer';
 import AddressHistory from '#components/AddressHistory';
-import Settings from '#components/Settings';
 import type { InboxAddress } from '#types/email';
 import styles from './InboxPage.module.scss';
 
@@ -23,7 +21,6 @@ export default function InboxPage({ username }: Props) {
   const [inbox, setInbox] = useState<InboxAddress | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showSettings, setShowSettings] = useState(false);
 
   /**
    * Fetch inbox data from API using username
@@ -68,26 +65,11 @@ export default function InboxPage({ username }: Props) {
   return (
     <div className={styles.container}>
       <header className={styles.header}>
-        <div>
-          <h1 className={styles.title} onClick={handleBack} title="Go to Home">
-            Junk Mail
-          </h1>
-          <p className={styles.subtitle}>Disposable email for testing & privacy</p>
-        </div>
-        <button
-          className={styles.settingsBtn}
-          onClick={() => setShowSettings(!showSettings)}
-          title="Settings"
-        >
-          <MdSettingsIcon />
-        </button>
+        <h1 className={styles.title} onClick={handleBack} title="Go to Home">
+          Junk Mail
+        </h1>
+        <p className={styles.subtitle}>Disposable email for testing & privacy</p>
       </header>
-
-      {showSettings && (
-        <div className={styles.settingsPanel}>
-          <Settings />
-        </div>
-      )}
 
       <main className={styles.main}>
         {loading ? (
@@ -98,7 +80,7 @@ export default function InboxPage({ username }: Props) {
           <div className={styles.mainContent}>
             <div className={styles.error}>
               <h2>Inbox not found</h2>
-              <p>{error || 'This inbox does not exist or has expired.'}</p>
+              <p>{error || 'This inbox does not exist.'}</p>
               <button onClick={handleBack} className={styles.backButton}>
                 Go to Home
               </button>
@@ -117,7 +99,7 @@ export default function InboxPage({ username }: Props) {
       </main>
 
       <footer className={styles.footer}>
-        <p>Emails auto-delete based on retention settings</p>
+        <p>Permanent addresses - Emails expire automatically</p>
       </footer>
     </div>
   );

@@ -5,16 +5,17 @@ Serveur d'emails jetables avec Next.js 15, TypeScript, serveur SMTP local et Red
 ## Features
 
 - ✉️ **Serveur SMTP** intégré (port 25) pour réception d'emails
-- 🔄 **Stockage temporaire** avec Redis (TTL configurable)
+- 🔄 **Stockage temporaire** avec Redis (TTL configurable via env)
 - 💾 **Historique persistant** avec SQLite (adresses créées, compteurs emails)
 - 🎨 **Interface moderne** Next.js 15 + TypeScript + SCSS
 - 📱 **Mobile-first** design responsive
-- ⚙️ **Configuration dynamique** : durée de rétention modifiable via UI
-- 📧 **Adresses personnalisées** : création aléatoire (a-z, 0-9) ou manuelle (a-z, 0-9, .-_)
-- 📜 **Historique adresses** : réutilisation des adresses actives
+- 📧 **Adresses permanentes** : création aléatoire ou personnalisée (a-z, 0-9, .-_)
+- 🗑️ **Suppression manuelle** : gestion individuelle des adresses via interface
+- 📜 **Historique adresses** : sidebar avec adresses récentes
 - 🔗 **Liens directs inbox** : accès direct via URL partageable `/inbox/[address]`
 - 📎 **Pièces jointes** : téléchargement et affichage inline des images
 - 🖼️ **HTML sécurisé** : affichage emails HTML avec sanitization renforcée
+- 🔒 **Protection par mot de passe** : authentification cookie HTTP-only
 - 🐳 **Docker Compose** pour déploiement simplifié
 - 🔒 **Sécurité** : sanitization HTML stricte, validation, protection XSS
 
@@ -40,10 +41,11 @@ Serveur d'emails jetables avec Next.js 15, TypeScript, serveur SMTP local et Red
 
 ### Stockage hybride
 
-- **Redis** : Emails temporaires (TTL configurable), inbox actives
+- **Redis** : Emails temporaires (TTL via `EMAIL_RETENTION_DAYS`), adresses actives
 - **SQLite** : 
-  - Historique adresses créées, compteurs emails reçus, statistiques
-  - **Configuration** : durée de rétention (remplace `EMAIL_RETENTION` env)
+  - Historique des adresses créées (permanentes)
+  - Compteurs emails reçus, statistiques
+  - Adresses supprimables manuellement via interface
 
 ## Prérequis
 
@@ -103,6 +105,7 @@ Fichier `.env.prod` (production Docker) ou `.env` (développement) :
 | `NODE_ENV` | production | Environment (production/development) |
 | `WEB_PORT` | 3000 | Port externe Next.js |
 | `APP_PASSWORD` | - | Mot de passe de protection (requis) |
+| `EMAIL_RETENTION_DAYS` | 365 | Durée de rétention des emails (jours) |
 | `SMTP_PORT` | 25 | Port SMTP |
 | `SMTP_HOST` | 0.0.0.0 | Bind SMTP |
 | `SMTP_DOMAIN` | localhost | Domaine mail |
@@ -110,7 +113,9 @@ Fichier `.env.prod` (production Docker) ou `.env` (développement) :
 | `REDIS_PORT` | 6379 | Port Redis |
 | `DB_PATH` | /app/data | Chemin base SQLite (Docker) |
 
-**Note** : La durée de rétention des emails (`email_retention`) est maintenant configurée uniquement via l'interface Settings et stockée en SQLite. Valeur par défaut auto-initialisée : 3600s (1 heure).
+**Note** : 
+- Les **adresses sont permanentes** (plus d'expiration automatique). Vous pouvez supprimer une adresse manuellement via le bouton de suppression dans l'historique.
+- La durée de rétention des **emails** est configurable via `EMAIL_RETENTION_DAYS` (défaut: **365 jours**). Les emails expirent automatiquement après ce délai.
 
 ### Protection par mot de passe
 
@@ -134,6 +139,20 @@ APP_PASSWORD=votre_mot_de_passe_securise
 - SameSite=lax (protection CSRF)
 - Expiration automatique après 7 jours
 - Validation côté serveur via middleware Next.js
+
+### Création et gestion des adresses
+
+**Page d'accueil simplifiée :**
+- Input direct pour créer une adresse personnalisée + bouton "Créer"
+- Bouton "Générer une adresse aléatoire" pour création automatique
+- Sidebar avec historique des adresses récentes
+- Si vous créez une adresse existante, vous êtes **automatiquement redirigé vers son inbox** (pas d'erreur)
+
+**Gestion des adresses :**
+- Les adresses sont **permanentes** (pas d'expiration automatique)
+- Suppression manuelle via bouton 🗑️ dans l'historique
+- Une adresse supprimée peut être recréée par la suite
+- Les emails sont conservés selon `EMAIL_RETENTION_DAYS` (défaut: 365 jours)
 
 ## Configuration DNS Cloudflare
 
@@ -291,7 +310,7 @@ Accès direct à une inbox spécifique via URL simplifiée (username uniquement)
 - Le domaine (@mail.votredomaine.com) est automatiquement ajouté côté serveur
 
 ### `POST /api/address`
-Génère une nouvelle adresse email jetable
+Génère une nouvelle adresse email (permanente)
 
 **Response:**
 ```json
@@ -300,10 +319,11 @@ Génère une nouvelle adresse email jetable
   "data": {
     "address": "abc123@mail.votredomaine.com",
     "createdAt": 1234567890,
-    "expiresAt": 1234571490
+    "expiresAt": 0
   }
 }
 ```
+Note: `expiresAt: 0` signifie adresse permanente.
 
 ### `GET /api/inbox/[address]`
 Récupère emails pour une adresse
@@ -355,15 +375,13 @@ Récupère l'historique des adresses créées
         "id": 1,
         "address": "abc123@mail.exemple.com",
         "created_at": 1234567890,
-        "expires_at": 1234571490,
         "email_count": 5,
         "last_email_at": 1234570000
       }
     ],
     "stats": {
       "total_addresses": 150,
-      "total_emails": 423,
-      "active_addresses": 12
+      "total_emails": 423
     }
   }
 }
@@ -384,38 +402,6 @@ Récupère statistiques globales
 }
 ```
 
-### `GET /api/settings`
-Récupère configuration actuelle
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "email_retention": "3600"
-  }
-}
-```
-
-### `POST /api/settings`
-Met à jour configuration
-
-**Body:**
-```json
-{
-  "email_retention": "7200"
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "email_retention": "7200"
-  }
-}
-```
 
 ## Scripts
 
@@ -443,17 +429,10 @@ Fichier : `./data/addresses.db` (ou `DB_PATH`)
 - `id` : Primary key auto-increment
 - `address` : Email address (unique)
 - `created_at` : Timestamp création
-- `expires_at` : Timestamp expiration
 - `email_count` : Nombre emails reçus
 - `last_email_at` : Dernier email reçu
 
-**Table `settings` :**
-- `key` : Clé de configuration (primary)
-- `value` : Valeur
-- `updated_at` : Timestamp dernière modification
-
-**Settings disponibles :**
-- `email_retention` : Durée TTL emails en secondes (défaut: 3600, auto-initialisé au premier accès)
+Note: Les adresses sont maintenant permanentes (plus de colonne `expires_at`).
 
 **Backup :**
 ```bash
@@ -464,10 +443,15 @@ cp ./data/addresses.db ./backup-$(date +%Y%m%d).db
 docker cp junk-mail-web-1:/app/data/addresses.db ./backup.db
 ```
 
-**Maintenance (optionnelle) :**
+**Suppression manuelle d'une adresse :**
 ```bash
-# Nettoyer adresses expirées (> 1 mois)
-sqlite3 ./data/addresses.db "DELETE FROM addresses WHERE expires_at < strftime('%s', 'now', '-30 days') * 1000;"
+# Via l'interface web : bouton supprimer dans l'historique
+
+# Ou via API
+curl -X DELETE http://localhost:3000/api/address/test@mail.votredomaine.com
+
+# Ou directement en base
+sqlite3 ./data/addresses.db "DELETE FROM addresses WHERE address = 'test@mail.votredomaine.com';"
 ```
 
 ## Fonctionnalités UI
@@ -485,10 +469,11 @@ sqlite3 ./data/addresses.db "DELETE FROM addresses WHERE expires_at < strftime('
 
 ### 2. Historique des adresses
 
-- Affichage des 10 dernières adresses créées
+- Affichage des 10 dernières adresses créées (permanentes)
 - Compteur d'emails reçus par adresse
-- Badge "Expired" pour adresses expirées
-- Clic sur adresse active pour charger l'inbox
+- Bouton de suppression pour chaque adresse (🗑️)
+- Clic sur adresse pour charger l'inbox
+- Adresse supprimée peut être recréée ultérieurement
 
 ### 3. Vue détail email
 
@@ -504,18 +489,6 @@ sqlite3 ./data/addresses.db "DELETE FROM addresses WHERE expires_at < strftime('
   - Protection XSS : scripts, iframes, objets bloqués
   - Styles CSS filtrés (colors, sizing, spacing uniquement)
   - Links sécurisés
-
-### 4. Paramètres (Settings)
-
-- **Durée de rétention** : configurable en jours/heures/minutes
-  - 3 inputs séparés (Days/Hours/Minutes)
-  - Conversion automatique en secondes
-  - Affichage total en secondes (live)
-  - Limites : 1 minute - 365 jours
-  - **Source unique** : SQLite (plus de variable env)
-- Sauvegarde persistante en SQLite
-- Auto-initialisation à 3600s (1h) si non configuré
-- Application immédiate aux nouvelles adresses
 
 ## Tests
 

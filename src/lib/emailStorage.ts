@@ -85,24 +85,23 @@ export async function getInboxEmails(address: string): Promise<Email[]> {
 }
 
 /**
- * Create temporary inbox address
+ * Create permanent inbox address
  */
 export async function createInboxAddress(address: string): Promise<InboxAddress> {
-  const retention = getEmailRetention();
   const now = Date.now();
-  const expiresAt = now + retention * 1000;
   
   const inbox: InboxAddress = {
     address,
     createdAt: now,
-    expiresAt,
+    expiresAt: 0, // 0 = permanent (no expiration)
   };
   
   const key = `address:${address}`;
-  await redis.setex(key, retention, JSON.stringify(inbox));
+  // Store permanently in Redis (no TTL)
+  await redis.set(key, JSON.stringify(inbox));
   
   // Save to persistent database
-  saveAddress(address, now, expiresAt);
+  saveAddress(address, now);
   
   return inbox;
 }
@@ -128,6 +127,36 @@ export async function deleteEmail(id: string): Promise<void> {
   for (const recipient of email.to) {
     const inboxKey = `inbox:${recipient.address}`;
     await redis.zrem(inboxKey, id);
+  }
+}
+
+/**
+ * Delete inbox address and all its emails from Redis
+ * @param {string} address - Email address to delete
+ * @returns {Promise<number>} Number of emails deleted
+ */
+export async function deleteInboxAddress(address: string): Promise<number> {
+  try {
+    const key = `address:${address}`;
+    const inboxKey = `inbox:${address}`;
+    
+    // Get all email IDs for this inbox
+    const emailIds = await redis.zrange(inboxKey, 0, -1);
+    
+    // Delete all emails
+    for (const emailId of emailIds) {
+      await redis.del(`email:${emailId}`);
+    }
+    
+    // Delete inbox key and address key
+    await redis.del(inboxKey);
+    await redis.del(key);
+    
+    console.log(`[Delete] Removed address ${address} with ${emailIds.length} emails`);
+    return emailIds.length;
+  } catch (error) {
+    console.error('[Delete] Error deleting address:', error);
+    throw error;
   }
 }
 

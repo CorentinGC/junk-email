@@ -6,14 +6,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { MdHistory, MdEmail } from 'react-icons/md';
+import { MdHistory, MdEmail, MdDelete } from 'react-icons/md';
 import styles from './AddressHistory.module.scss';
 
 interface Address {
   id: number;
   address: string;
   created_at: number;
-  expires_at: number;
   email_count: number;
   last_email_at: number | null;
 }
@@ -42,6 +41,7 @@ export default function AddressHistory({ onSelectAddress }: Props) {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAll, setShowAll] = useState(false);
+  const [deletingAddress, setDeletingAddress] = useState<string | null>(null);
 
   /**
    * Fetch addresses from API
@@ -59,6 +59,40 @@ export default function AddressHistory({ onSelectAddress }: Props) {
       console.error('Failed to fetch addresses:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  /**
+   * Delete address
+   * @param {string} address - Email address to delete
+   */
+  const handleDeleteAddress = async (address: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent click propagation to parent
+    
+    if (!confirm(`Supprimer l'adresse ${address} et tous ses emails ?`)) {
+      return;
+    }
+
+    setDeletingAddress(address);
+    
+    try {
+      const response = await fetch(`/api/address/${encodeURIComponent(address)}`, {
+        method: 'DELETE',
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Refresh addresses list
+        await fetchAddresses();
+      } else {
+        alert('Erreur lors de la suppression');
+      }
+    } catch (err) {
+      console.error('Failed to delete address:', err);
+      alert('Erreur lors de la suppression');
+    } finally {
+      setDeletingAddress(null);
     }
   };
 
@@ -88,8 +122,6 @@ export default function AddressHistory({ onSelectAddress }: Props) {
     );
   }
 
-  const now = Date.now();
-
   return (
     <div className={styles.container}>
       <h3 className={styles.title}>
@@ -98,13 +130,13 @@ export default function AddressHistory({ onSelectAddress }: Props) {
 
       <div className={styles.list}>
         {addresses.map((addr) => {
-          const isActive = addr.expires_at > now;
+          const isDeleting = deletingAddress === addr.address;
           
           return (
             <div
               key={addr.id}
-              className={`${styles.item} ${!isActive ? styles.expired : ''}`}
-              onClick={() => isActive && onSelectAddress(addr.address)}
+              className={`${styles.item} ${isDeleting ? styles.deleting : ''}`}
+              onClick={() => !isDeleting && onSelectAddress(addr.address)}
             >
               <div className={styles.itemHeader}>
                 <MdEmail className={styles.icon} />
@@ -113,7 +145,14 @@ export default function AddressHistory({ onSelectAddress }: Props) {
               <div className={styles.itemMeta}>
                 <span className={styles.time}>{formatTime(addr.created_at)}</span>
                 <span className={styles.count}>{addr.email_count} email(s)</span>
-                {!isActive && <span className={styles.badge}>Expired</span>}
+                <button
+                  className={styles.deleteBtn}
+                  onClick={(e) => handleDeleteAddress(addr.address, e)}
+                  disabled={isDeleting}
+                  title="Supprimer l'adresse"
+                >
+                  <MdDelete />
+                </button>
               </div>
             </div>
           );

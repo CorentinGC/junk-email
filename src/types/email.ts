@@ -29,7 +29,7 @@ export interface Email {
 export interface InboxAddress {
   address: string;
   createdAt: number;
-  expiresAt: number;
+  expiresAt: number; // 0 = permanent (addresses no longer expire)
 }
 
 
