@@ -102,7 +102,7 @@ Fichier `.env.prod` (production Docker) ou `.env` (développement) :
 |----------|--------|-------------|
 | `NODE_ENV` | production | Environment (production/development) |
 | `WEB_PORT` | 3000 | Port externe Next.js |
-| `APP_PASSWORD` | - | Mot de passe de protection (optionnel) |
+| `APP_PASSWORD` | - | Mot de passe de protection (requis) |
 | `SMTP_PORT` | 25 | Port SMTP |
 | `SMTP_HOST` | 0.0.0.0 | Bind SMTP |
 | `SMTP_DOMAIN` | localhost | Domaine mail |
@@ -111,6 +111,29 @@ Fichier `.env.prod` (production Docker) ou `.env` (développement) :
 | `DB_PATH` | /app/data | Chemin base SQLite (Docker) |
 
 **Note** : La durée de rétention des emails (`email_retention`) est maintenant configurée uniquement via l'interface Settings et stockée en SQLite. Valeur par défaut auto-initialisée : 3600s (1 heure).
+
+### Protection par mot de passe
+
+L'application est protégée par authentification simple avec cookie HTTP-only :
+
+**Configuration requise :**
+```bash
+# Dans .env.prod
+APP_PASSWORD=votre_mot_de_passe_securise
+```
+
+**Fonctionnement :**
+- Accès à l'app → Redirection automatique vers `/login` (middleware)
+- Connexion avec `APP_PASSWORD` → Cookie HTTP-only défini (validité 7 jours)
+- Middleware vérifie le cookie sur chaque requête
+- Logout via `/api/auth/logout` → Suppression du cookie
+
+**Sécurité :**
+- Cookie HTTP-only (non accessible JavaScript, protection XSS)
+- Secure en production (HTTPS uniquement)
+- SameSite=lax (protection CSRF)
+- Expiration automatique après 7 jours
+- Validation côté serveur via middleware Next.js
 
 ## Configuration DNS Cloudflare
 

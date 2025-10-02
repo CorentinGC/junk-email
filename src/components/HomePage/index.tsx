@@ -7,7 +7,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { MdSettings as MdSettingsIcon } from 'react-icons/md';
+import { MdSettings as MdSettingsIcon, MdLogout } from 'react-icons/md';
 import AddressGenerator from '#components/AddressGenerator';
 import AddressHistory from '#components/AddressHistory';
 import Settings from '#components/Settings';
@@ -36,6 +36,22 @@ export default function HomePage() {
     router.push(`/inbox/${encodeURIComponent(username)}`);
   };
 
+  /**
+   * Handle logout
+   */
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      router.push('/login');
+      router.refresh();
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force redirect even if API call fails
+      router.push('/login');
+      router.refresh();
+    }
+  };
+
   return (
     <div className={styles.container}>
       <header className={styles.header}>
@@ -43,13 +59,22 @@ export default function HomePage() {
           <h1 className={styles.title}>Junk Mail</h1>
           <p className={styles.subtitle}>Disposable email for testing & privacy</p>
         </div>
-        <button
-          className={styles.settingsBtn}
-          onClick={() => setShowSettings(!showSettings)}
-          title="Settings"
-        >
-          <MdSettingsIcon />
-        </button>
+        <div className={styles.headerActions}>
+          <button
+            className={styles.settingsBtn}
+            onClick={() => setShowSettings(!showSettings)}
+            title="Settings"
+          >
+            <MdSettingsIcon />
+          </button>
+          <button
+            className={styles.logoutBtn}
+            onClick={handleLogout}
+            title="Logout"
+          >
+            <MdLogout />
+          </button>
+        </div>
       </header>
 
       {showSettings && (

@@ -21,9 +21,16 @@
   @media (min-width: 768px) {
     margin-bottom: 3rem;
   }
+
+  .headerActions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
 }
 
-.settingsBtn {
+.settingsBtn,
+.logoutBtn {
   background: white;
   border: 2px solid #e0e0e0;
   border-radius: 8px;
@@ -36,14 +43,24 @@
   align-items: center;
   justify-content: center;
 
+  @media (min-width: 768px) {
+    padding: 0.875rem;
+  }
+}
+
+.settingsBtn {
   &:hover {
     border-color: #4CAF50;
     color: #4CAF50;
     transform: rotate(45deg);
   }
+}
 
-  @media (min-width: 768px) {
-    padding: 0.875rem;
+.logoutBtn {
+  &:hover {
+    border-color: #f44336;
+    color: #f44336;
+    background-color: #fff5f5;
   }
 }
 
