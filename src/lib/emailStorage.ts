@@ -116,7 +116,8 @@ export async function getInboxAddress(address: string): Promise<InboxAddress | n
 }
 
 /**
- * Delete email
+ * Delete single email from Redis
+ * @param {string} id - Email ID to delete
  */
 export async function deleteEmail(id: string): Promise<void> {
   const email = await getEmail(id);
@@ -128,6 +129,31 @@ export async function deleteEmail(id: string): Promise<void> {
     const inboxKey = `inbox:${recipient.address}`;
     await redis.zrem(inboxKey, id);
   }
+  
+  console.log(`[Delete] Removed email ${id}`);
+}
+
+/**
+ * Delete all emails from an inbox (keeps address alive)
+ * @param {string} address - Inbox address
+ * @returns {Promise<number>} Number of emails deleted
+ */
+export async function deleteAllInboxEmails(address: string): Promise<number> {
+  const inboxKey = `inbox:${address}`;
+  
+  // Get all email IDs for this inbox
+  const emailIds = await redis.zrange(inboxKey, 0, -1);
+  
+  // Delete all emails
+  for (const emailId of emailIds) {
+    await redis.del(`email:${emailId}`);
+  }
+  
+  // Clear inbox list
+  await redis.del(inboxKey);
+  
+  console.log(`[Delete] Cleared ${emailIds.length} emails from inbox ${address}`);
+  return emailIds.length;
 }
 
 /**

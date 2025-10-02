@@ -147,12 +147,35 @@ APP_PASSWORD=votre_mot_de_passe_securise
 - Bouton "Générer une adresse aléatoire" pour création automatique
 - Sidebar avec historique des adresses récentes
 - Si vous créez une adresse existante, vous êtes **automatiquement redirigé vers son inbox** (pas d'erreur)
+- **Accès direct via URL** : Si vous accédez à `/inbox/monAdresse` et que l'adresse n'existe pas, elle est **créée automatiquement**
 
 **Gestion des adresses :**
 - Les adresses sont **permanentes** (pas d'expiration automatique)
 - Suppression manuelle via bouton 🗑️ dans l'historique
 - Une adresse supprimée peut être recréée par la suite
 - Les emails sont conservés selon `EMAIL_RETENTION_DAYS` (défaut: 365 jours)
+
+**Gestion des emails :**
+- **Suppression individuelle** : Bouton 🗑️ sur chaque email dans la liste
+- **Vider l'inbox** : Bouton pour supprimer tous les emails d'une inbox (conserve l'adresse)
+- Confirmations avant suppression pour éviter les erreurs
+
+### API Routes
+
+**Adresses :**
+- `POST /api/address` — Créer une adresse (personnalisée ou aléatoire)
+- `GET /api/addresses` — Liste des adresses créées avec pagination
+- `DELETE /api/address/[address]` — Supprimer une adresse et tous ses emails
+
+**Inbox & Emails :**
+- `GET /api/inbox/[address]` — Récupérer une inbox et ses emails (auto-création si inexistante)
+- `DELETE /api/inbox/[address]` — Vider tous les emails d'une inbox (conserve l'adresse)
+- `GET /api/email/[id]` — Récupérer un email spécifique
+- `DELETE /api/email/[id]` — Supprimer un email spécifique
+
+**Authentification :**
+- `POST /api/auth/login` — Connexion (cookie HTTP-only)
+- `POST /api/auth/logout` — Déconnexion
 
 ## Configuration DNS Cloudflare
 

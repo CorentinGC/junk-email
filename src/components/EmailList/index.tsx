@@ -5,7 +5,7 @@
 
 'use client';
 
-import { MdEmail, MdAttachFile } from 'react-icons/md';
+import { MdEmail, MdAttachFile, MdDelete } from 'react-icons/md';
 import type { Email } from '#types/email';
 import styles from './EmailList.module.scss';
 
@@ -13,6 +13,7 @@ interface Props {
   emails: Email[];
   loading: boolean;
   onSelect: (email: Email) => void;
+  onDelete?: (emailId: string) => void;
 }
 
 /**
@@ -30,7 +31,19 @@ function formatTime(timestamp: number): string {
   return new Date(timestamp).toLocaleDateString();
 }
 
-export default function EmailList({ emails, loading, onSelect }: Props) {
+export default function EmailList({ emails, loading, onSelect, onDelete }: Props) {
+  /**
+   * Handle delete button click
+   * @param {React.MouseEvent} e - Click event
+   * @param {string} emailId - Email ID to delete
+   */
+  const handleDelete = (e: React.MouseEvent, emailId: string) => {
+    e.stopPropagation(); // Prevent opening email
+    if (onDelete && confirm('Supprimer cet email ?')) {
+      onDelete(emailId);
+    }
+  };
+
   if (loading && emails.length === 0) {
     return (
       <div className={styles.emptyState}>
@@ -59,7 +72,18 @@ export default function EmailList({ emails, loading, onSelect }: Props) {
         >
           <div className={styles.header}>
             <span className={styles.from}>{email.from.name || email.from.address}</span>
-            <span className={styles.time}>{formatTime(email.receivedAt)}</span>
+            <div className={styles.actions}>
+              <span className={styles.time}>{formatTime(email.receivedAt)}</span>
+              {onDelete && (
+                <button
+                  className={styles.deleteBtn}
+                  onClick={(e) => handleDelete(e, email.id)}
+                  title="Supprimer"
+                >
+                  <MdDelete />
+                </button>
+              )}
+            </div>
           </div>
           <div className={styles.subject}>
             {email.subject}
