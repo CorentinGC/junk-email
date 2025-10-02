@@ -4,7 +4,7 @@
  */
 
 import redis from './redis';
-import { saveAddress, incrementEmailCount, getEmailRetention } from './database';
+import { saveAddress, incrementEmailCount, decrementEmailCount, resetEmailCount, getEmailRetention } from './database';
 import type { Email, InboxAddress } from '#types/email';
 
 /**
@@ -128,6 +128,9 @@ export async function deleteEmail(id: string): Promise<void> {
   for (const recipient of email.to) {
     const inboxKey = `inbox:${recipient.address}`;
     await redis.zrem(inboxKey, id);
+    
+    // Decrement email count in database
+    decrementEmailCount(recipient.address);
   }
   
   console.log(`[Delete] Removed email ${id}`);
@@ -151,6 +154,9 @@ export async function deleteAllInboxEmails(address: string): Promise<number> {
   
   // Clear inbox list
   await redis.del(inboxKey);
+  
+  // Reset email count in database
+  resetEmailCount(address);
   
   console.log(`[Delete] Cleared ${emailIds.length} emails from inbox ${address}`);
   return emailIds.length;

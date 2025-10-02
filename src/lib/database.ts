@@ -79,6 +79,38 @@ export function incrementEmailCount(address: string): void {
 }
 
 /**
+ * Decrement email count for address
+ * @param {string} address - Email address
+ */
+export function decrementEmailCount(address: string): void {
+  const stmt = db.prepare(`
+    UPDATE addresses
+    SET email_count = CASE 
+      WHEN email_count > 0 THEN email_count - 1 
+      ELSE 0 
+    END
+    WHERE address = ?
+  `);
+  stmt.run(address);
+  console.log('[Database] Decremented email count for', address);
+}
+
+/**
+ * Reset email count for address to 0
+ * @param {string} address - Email address
+ */
+export function resetEmailCount(address: string): void {
+  const stmt = db.prepare(`
+    UPDATE addresses
+    SET email_count = 0,
+        last_email_at = NULL
+    WHERE address = ?
+  `);
+  stmt.run(address);
+  console.log('[Database] Reset email count for', address);
+}
+
+/**
  * Get all addresses with pagination (permanent addresses)
  */
 export function getAllAddresses(limit = 50, offset = 0): Array<{
