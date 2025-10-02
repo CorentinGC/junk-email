@@ -77,30 +77,38 @@ L'application sera accessible sur http://localhost:3000
 ## Déploiement (Docker Compose)
 
 ```bash
-# 1. Configurer domaine
-export SMTP_DOMAIN=mail.votredomaine.com
+# 1. Créer fichier de configuration
+cp env.prod.example .env.prod
 
-# 2. Build et lancer
+# 2. Éditer .env.prod avec vos valeurs
+nano .env.prod
+# Modifier au minimum : SMTP_DOMAIN, APP_PASSWORD
+
+# 3. Build et lancer
 docker-compose up -d
 
-# 3. Vérifier logs
+# 4. Vérifier logs
 docker-compose logs -f
 
-# 4. Arrêter
+# 5. Arrêter
 docker-compose down
 ```
 
 ### Variables d'environnement
 
+Fichier `.env.prod` (production Docker) ou `.env` (développement) :
+
 | Variable | Défaut | Description |
 |----------|--------|-------------|
-| `PORT` | 3000 | Port Next.js |
+| `NODE_ENV` | production | Environment (production/development) |
+| `WEB_PORT` | 3000 | Port externe Next.js |
+| `APP_PASSWORD` | - | Mot de passe de protection (optionnel) |
 | `SMTP_PORT` | 25 | Port SMTP |
 | `SMTP_HOST` | 0.0.0.0 | Bind SMTP |
 | `SMTP_DOMAIN` | localhost | Domaine mail |
-| `REDIS_HOST` | localhost | Hôte Redis |
+| `REDIS_HOST` | redis | Hôte Redis (nom service Docker) |
 | `REDIS_PORT` | 6379 | Port Redis |
-| `DB_PATH` | ./data | Chemin base SQLite |
+| `DB_PATH` | /app/data | Chemin base SQLite (Docker) |
 
 **Note** : La durée de rétention des emails (`email_retention`) est maintenant configurée uniquement via l'interface Settings et stockée en SQLite. Valeur par défaut auto-initialisée : 3600s (1 heure).
 

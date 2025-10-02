@@ -2,10 +2,12 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
-    ports:
-      - "6379:6379"
+    #ports:
+    #  - "6379:6379"
     volumes:
       - redis_data:/data
+    networks:
+      -  junkmail_default
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -17,36 +19,32 @@ services:
       context: .
       dockerfile: Dockerfile.smtp
     restart: unless-stopped
-    ports:
-      - "25:25"
-    environment:
-      - SMTP_PORT=25
-      - SMTP_HOST=0.0.0.0
-      - SMTP_DOMAIN=${SMTP_DOMAIN:-localhost}
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - DB_PATH=/app/data
+    env_file:
+      - .env.prod
+    #ports:
     volumes:
       - db_data:/app/data
+    networks:
+      - junkmail_default
+      - reverse-proxy_default
     depends_on:
       redis:
         condition: service_healthy
 
-  web:
+  junkmail:
     build:
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
-    ports:
-      - "3000:3000"
-    environment:
-      - NODE_ENV=production
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - SMTP_DOMAIN=${SMTP_DOMAIN:-localhost}
-      - DB_PATH=/app/data
+    env_file:
+      - .env.prod
+    #ports:
+      #- "3000:80"
     volumes:
       - db_data:/app/data
+    networks:
+      - junkmail_default
+      - reverse-proxy_default
     depends_on:
       redis:
         condition: service_healthy
@@ -55,4 +53,7 @@ volumes:
   redis_data:
   db_data:
 
-
+networks:
+  junkmail_default:
+  reverse-proxy_default:
+    external: true
