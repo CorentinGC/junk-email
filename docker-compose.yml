@@ -21,7 +21,8 @@ services:
     restart: unless-stopped
     env_file:
       - .env.prod
-    #ports:
+    ports:
+      - "25:25"
     volumes:
       - db_data:/app/data
     networks:
