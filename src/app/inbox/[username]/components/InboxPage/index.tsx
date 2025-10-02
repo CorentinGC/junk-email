@@ -69,7 +69,9 @@ export default function InboxPage({ username }: Props) {
     <div className={styles.container}>
       <header className={styles.header}>
         <div>
-          <h1 className={styles.title}>Junk Mail</h1>
+          <h1 className={styles.title} onClick={handleBack} title="Go to Home">
+            Junk Mail
+          </h1>
           <p className={styles.subtitle}>Disposable email for testing & privacy</p>
         </div>
         <button

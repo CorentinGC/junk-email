@@ -13,8 +13,10 @@ Serveur d'emails jetables avec Next.js 15, TypeScript, serveur SMTP local et Red
 - 📧 **Adresses personnalisées** : création aléatoire (a-z, 0-9) ou manuelle (a-z, 0-9, .-_)
 - 📜 **Historique adresses** : réutilisation des adresses actives
 - 🔗 **Liens directs inbox** : accès direct via URL partageable `/inbox/[address]`
+- 📎 **Pièces jointes** : téléchargement et affichage inline des images
+- 🖼️ **HTML sécurisé** : affichage emails HTML avec sanitization renforcée
 - 🐳 **Docker Compose** pour déploiement simplifié
-- 🔒 **Sécurité** : sanitization HTML, validation stricte
+- 🔒 **Sécurité** : sanitization HTML stricte, validation, protection XSS
 
 ## Architecture
 
@@ -292,6 +294,19 @@ Récupère un email par ID
 ### `DELETE /api/email/[id]`
 Supprime un email
 
+### `GET /api/email/[id]/attachment/[filename]`
+Télécharge une pièce jointe
+
+**Exemple:**
+- `/api/email/abc123xyz/attachment/document.pdf`
+- `/api/email/abc123xyz/attachment/image.png`
+
+**Headers:**
+- `Content-Type`: Type MIME de la pièce jointe
+- `Content-Disposition`: `attachment; filename="..."`
+- `Content-Length`: Taille du fichier
+- `Cache-Control`: `private, max-age=3600`
+
 ### `GET /api/addresses`
 Récupère l'historique des adresses créées
 
@@ -444,7 +459,22 @@ sqlite3 ./data/addresses.db "DELETE FROM addresses WHERE expires_at < strftime('
 - Badge "Expired" pour adresses expirées
 - Clic sur adresse active pour charger l'inbox
 
-### 3. Paramètres (Settings)
+### 3. Vue détail email
+
+- **Affichage HTML** : rendu sécurisé des emails HTML avec styles
+- **Pièces jointes** : 
+  - Liste interactive avec icônes (📎 fichiers, 🖼️ images)
+  - Taille affichée (B, KB, MB)
+  - Téléchargement au clic
+  - **Images** : affichage automatique en grille responsive en bas de l'email
+  - Lazy loading pour performance
+- **Sanitization HTML** :
+  - Tags autorisés : texte, formatage, images, styles inline
+  - Protection XSS : scripts, iframes, objets bloqués
+  - Styles CSS filtrés (colors, sizing, spacing uniquement)
+  - Links sécurisés
+
+### 4. Paramètres (Settings)
 
 - **Durée de rétention** : configurable en jours/heures/minutes
   - 3 inputs séparés (Days/Hours/Minutes)

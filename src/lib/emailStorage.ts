@@ -8,12 +8,44 @@ import { saveAddress, incrementEmailCount, getEmailRetention } from './database'
 import type { Email, InboxAddress } from '#types/email';
 
 /**
+ * Serialize email for storage (convert Buffer to base64)
+ * @param {Email} email - Email to serialize
+ * @returns {string} Serialized email
+ */
+function serializeEmail(email: Email): string {
+  const serializable = {
+    ...email,
+    attachments: email.attachments?.map(att => ({
+      ...att,
+      content: att.content ? att.content.toString('base64') : undefined,
+    })),
+  };
+  return JSON.stringify(serializable);
+}
+
+/**
+ * Deserialize email from storage (convert base64 to Buffer)
+ * @param {string} data - Serialized email data
+ * @returns {Email} Deserialized email
+ */
+function deserializeEmail(data: string): Email {
+  const parsed = JSON.parse(data);
+  return {
+    ...parsed,
+    attachments: parsed.attachments?.map((att: any) => ({
+      ...att,
+      content: att.content ? Buffer.from(att.content, 'base64') : undefined,
+    })),
+  };
+}
+
+/**
  * Store email in Redis with TTL
  */
 export async function storeEmail(email: Email): Promise<void> {
   const retention = getEmailRetention();
   const key = `email:${email.id}`;
-  await redis.setex(key, retention, JSON.stringify(email));
+  await redis.setex(key, retention, serializeEmail(email));
   
   // Add to recipient inbox
   for (const recipient of email.to) {
@@ -32,7 +64,7 @@ export async function storeEmail(email: Email): Promise<void> {
 export async function getEmail(id: string): Promise<Email | null> {
   const key = `email:${id}`;
   const data = await redis.get(key);
-  return data ? JSON.parse(data) : null;
+  return data ? deserializeEmail(data) : null;
 }
 
 /**

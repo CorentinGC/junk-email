@@ -66,6 +66,7 @@ const server = new SMTPServer({
             filename: att.filename || 'unnamed',
             contentType: att.contentType,
             size: att.size,
+            content: att.content,
           })),
         };
         

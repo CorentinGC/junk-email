@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "next lint",
     "smtp": "tsx src/smtp/server.ts",
-    "smtp:dev": "tsx watch src/smtp/server.ts"
+    "smtp:dev": "tsx watch src/smtp/server.ts",
+    "docker:up": "docker compose up --build --force-recreate --no-deps "
   },
   "dependencies": {
     "better-sqlite3": "^11.5.0",
